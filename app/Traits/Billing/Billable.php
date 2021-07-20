@@ -225,9 +225,10 @@ trait Billable
     /**
      * Invoice the billable entity outside of regular billing cycle.
      *
-     * @return \Razorpay\Api\Invoice
+     * @param  array  $params
+     * @return false
      */
-    public function invoice(array $params)
+    public function invoice(array $params): bool
     {
         if ($this->razorpay_id) {
             try {
@@ -242,6 +243,19 @@ trait Billable
 
     public function invoiceIssue($invoice){
         return $invoice->issue();// Ref: razorpay.com/docs/invoices for request params example
+    }
+
+    /**
+     * Invoice resend to customer through email/sms.
+     *
+     * @param $id
+     * @return bool
+     */
+    public function invoiceResendToCustomer($id): bool
+    {
+        $invoice = $this->getRazorpayClient()->invoice->fetch($id);
+        $invoice->notifyBy('email');
+        return true;
     }
 
     /**

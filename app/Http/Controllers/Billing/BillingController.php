@@ -80,6 +80,12 @@ class BillingController extends Controller
 
     }
 
+    public function invoiceResend(): bool
+    {
+        $id = 'inv_HbG7RUsxPFHRqE';
+        return $this->invoiceResendToCustomer($id);
+    }
+
     public function invoice()
     {
         /*$invoice = $this->invoiceSubscription(['subscription_id'=>'sub_HYt5kQGsMDjEae']);
