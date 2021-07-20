@@ -198,7 +198,7 @@ class WebhookController extends Controller
     }
 
     /**
-     * Handle a cancelled Razorpay subscription.
+     * Handle a Response Invoice Paid.
      *
      * @param  array  $payload
      *
@@ -209,15 +209,12 @@ class WebhookController extends Controller
         $invoice = $payload['payload']['invoice']['entity'];
         $payment = $payload['payload']['payment']['entity'];
 
-        //$user = $this->getUserByRazorpayId('cust_HXBx6H3KEhUazg');
         $subscriptionInvoice = RazorpayInvoice::where('razorpay_id', $invoice['id']);
         $subscriptionData = $subscriptionInvoice;
         $subscriptionInvoice->update(['status' => $payment['status']]);
         $employeeList = $subscriptionData->pluck('subscription_user')->first();
 
-        foreach (json_decode($employeeList) as $id) {
-            User::where('id', $id)->update(['ends_at' => '2021-07-25']);
-        }
+        User::whereIn('id', json_decode($employeeList))->update(['ends_at' => '2021-07-27']);
 
 
         //Storage::disk('local')->put('example.txt', $subscriptionInvoice);

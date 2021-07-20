@@ -33,7 +33,6 @@ Route::prefix('billing')->namespace('Billing')->group(function () {
         Route::get('{id}/success', [BillingController::class, 'successPage']);
         Route::get('invoice', [BillingController::class, 'invoiceCreate']);
         Route::get('payment', [BillingController::class, 'payment']);
-        Route::get('invoice2', [WebhookController::class, 'handleInvoicePaid']);
     });
 
 });
