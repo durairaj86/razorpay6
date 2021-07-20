@@ -4,9 +4,11 @@ namespace App\Traits\Billing;
 
 use App\Http\Controllers\Billing\SubscriptionBuilder;
 use App\Http\Controllers\Billing\SubscriptionUpdateBuilder;
+use App\Models\Billing\RazorpayInvoice;
 use App\Models\Billing\Subscription;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Storage;
 
 trait Billable
 {
@@ -230,14 +232,16 @@ trait Billable
         if ($this->razorpay_id) {
             try {
                 $params['customer_id'] = $this->razorpay_id;
-
-                return $this->getRazorpayClient()->invoice->create($params)->issue(); // Ref: razorpay.com/docs/invoices for request params example
+                return $this->getRazorpayClient()->invoice->create($params);
             } catch (Exception $e) {
                 return false;
             }
         }
-
         return true;
+    }
+
+    public function invoiceIssue($invoice){
+        return $invoice->issue();// Ref: razorpay.com/docs/invoices for request params example
     }
 
     /**
@@ -248,10 +252,15 @@ trait Billable
      * @return \Razorpay\Api\Invoice
      *
      */
-    public function invoiceData($id)
+    /*public function invoiceData($id)
     {
         return $this->getRazorpayClient()->invoice->fetch($id); // get invoice
     }
+
+    public function invoiceSubscription($subscription)
+    {
+        return $this->getRazorpayClient()->invoice->all($subscription); // get invoice
+    }*/
 
     /**
      * Determine if the Razorpay model is actively subscribed to one of the given plans.
@@ -350,13 +359,6 @@ trait Billable
         $this->save();
 
         return $customer;
-    }
-
-    public function payment_links(array $options = []){
-        $payment = $this->getRazorpayClient()->payment->create(
-            $options
-        );
-        return $this->razorpay_id = $payment->id;
     }
 
     /**

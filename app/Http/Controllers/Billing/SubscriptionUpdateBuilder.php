@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
 
+use App\Models\User;
 use Carbon\Carbon;
+use Razorpay\Api\Entity;
 
-class SubscriptionUpdateBuilder extends Controller
+class SubscriptionUpdateBuilder extends Entity
 {
     /**
      * The model that is subscribing.
@@ -102,7 +104,7 @@ class SubscriptionUpdateBuilder extends Controller
         $this->subscriptionId = $attributes['subscription_id'];
         $this->quantity($attributes['quantity']);
         $this->totalCount($attributes['total_count']);
-        $this->create();
+        $this->update();
     }
 
     protected function getRazorpayClient()
@@ -233,26 +235,39 @@ class SubscriptionUpdateBuilder extends Controller
     /**
      * Create a new Razorpay subscription.
      *
-     * @return \Msonowal\Cashier\Subscription
+     * @return \App\Models\Billing\Subscription
      */
-    public function create()
+    public function update()
     {
+        /*$subscription = $this->getRazorpayClient()
+            ->subscription
+            ->update($this->buildPayload(), $this->subscriptionId);*/
         $subscription = $this->getRazorpayClient()
             ->subscription
-            ->update($this->buildPayload(), $this->subscriptionId);
+            ->fetch($this->subscriptionId);
 
-        return $this->owner->subscriptions()->update([
+        $attributes = [
             'name' => $this->name,
             'razorpay_id' => $subscription->id,
-            'razorpay_plan' => $this->plan,
+            /*'razorpay_plan' => $this->plan,
             'quantity' => $this->quantity,
             'total_count' => $this->total_count,
             'status' => $subscription->status,
             'paid_count' => $subscription->paid_count,
             'auth_attempts' => $subscription->auth_attempts,
-            'trial_ends_at' => $this->getStartAtDate(),
+            'trial_ends_at' => $this->getStartAtDate(),*/
             'ends_at' => null,
-        ]);
+        ];
+        //$getSubscription = User::query()->where('razorpay_id', $subscription->customer_id)->first();
+        $this->updateSubscription($subscription,$attributes);
+
+    }
+
+    protected function updateSubscription($subscription,array $attributes)
+    {
+        $relativeUrl = 'subscriptions/' . $subscription->id;
+
+        return $this->request('PATCH', $relativeUrl, $attributes);
     }
 
     /**

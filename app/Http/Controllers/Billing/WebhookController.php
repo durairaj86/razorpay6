@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Billing;
 
+use App\Models\Billing\RazorpayInvoice;
+use App\Models\User;
 use App\Traits\Billing\Billable;
 use App\Traits\Billing\Subscriptions;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -36,7 +39,7 @@ class WebhookController extends Controller
     /**
      * Handle a Razorpay webhook call.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request  $request
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -64,7 +67,7 @@ class WebhookController extends Controller
     /**
      * Handle a activated Razorpay subscription.
      *
-     * @param array $payload
+     * @param  array  $payload
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -87,7 +90,7 @@ class WebhookController extends Controller
     /**
      * Handle a Halted Razorpay subscription.
      *
-     * @param array $payload
+     * @param  array  $payload
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -110,7 +113,7 @@ class WebhookController extends Controller
     /**
      * Handle a Charged Razorpay subscription.
      *
-     * @param array $payload
+     * @param  array  $payload
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -133,7 +136,7 @@ class WebhookController extends Controller
     /**
      * Handle a Completed Razorpay subscription.
      *
-     * @param array $payload
+     * @param  array  $payload
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -142,13 +145,29 @@ class WebhookController extends Controller
         $payload = $payload['payload']['subscription']['entity'];
         $user = $this->getUserByRazorpayId($payload['customer_id']);
 
-        $subscription = $user
+        $subscriptionNew = $user
             ->subscriptions()
             ->where('razorpay_id', $payload['id'])
             ->limit(1)
             ->first();
+        $new_ends_at = null;
+        $subscriptions = $user->subscriptions();
+        $subscriptionCheck = $subscriptions->where('razorpay_id', '!=', $payload['id'])
+            ->where('razorpay_plan', $payload['plan_id'])->where('ends_at', '>=', Carbon::today());
 
-        $subscription->markAsCompleted($payload);
+        if ($subscriptionCheck->exists()) {
+            $subscriptionOld = $subscriptionCheck->first();
+            $ends_at = $subscriptionOld->ends_at;
+            $remaining_days = Carbon::now()->diffInDays($ends_at, false);
+
+            $subscriptionNew = $user->subscription()->where('razorpay_id', $payload['id'])
+                ->where('razorpay_plan', $payload['plan_id'])->first();
+
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $subscriptionNew->charge_at);
+            $new_ends_at = $date->addDays($remaining_days);
+        }
+
+        $subscriptionNew->markAsCompleted($new_ends_at);
 
         return new Response('Webhook Handled', 200);
     }
@@ -156,7 +175,7 @@ class WebhookController extends Controller
     /**
      * Handle a cancelled Razorpay subscription.
      *
-     * @param array $payload
+     * @param  array  $payload
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -179,9 +198,37 @@ class WebhookController extends Controller
     }
 
     /**
+     * Handle a cancelled Razorpay subscription.
+     *
+     * @param  array  $payload
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function handleInvoicePaid(array $payload)
+    {
+        $invoice = $payload['payload']['invoice']['entity'];
+        $payment = $payload['payload']['payment']['entity'];
+
+        //$user = $this->getUserByRazorpayId('cust_HXBx6H3KEhUazg');
+        $subscriptionInvoice = RazorpayInvoice::where('razorpay_id', $invoice['id']);
+        $subscriptionData = $subscriptionInvoice;
+        $subscriptionInvoice->update(['status' => $payment['status']]);
+        $employeeList = $subscriptionData->pluck('subscription_user')->first();
+
+        foreach (json_decode($employeeList) as $id) {
+            User::where('id', $id)->update(['ends_at' => '2021-07-25']);
+        }
+
+
+        //Storage::disk('local')->put('example.txt', $subscriptionInvoice);
+
+        return new Response('Webhook Handled', 200);
+    }
+
+    /**
      * Get the billable entity instance by Razorpay ID.
      *
-     * @param string $razorpayId
+     * @param  string  $razorpayId
      *
      * @return \App\Traits\Billing\Billable
      */
@@ -195,7 +242,7 @@ class WebhookController extends Controller
     /**
      * Handle calls to missing methods on the controller.
      *
-     * @param array $parameters
+     * @param  array  $parameters
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */

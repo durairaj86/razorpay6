@@ -27,12 +27,13 @@ Route::prefix('billing')->namespace('Billing')->group(function () {
         //Route::post('transaction', [BillingController::class, 'transaction']);
         //Route::get('invoice', [BillingController::class, 'invoice']);
         Route::post('authenticated', [BillingController::class, 'subscriptionAuthenticated']);
-        //Route::post('update', [BillingController::class, 'updateSubscriptions']);
+        Route::post('update', [BillingController::class, 'updateSubscriptions']);
         //Route::get('payment', [BillingController::class, 'payment']);
         Route::post('webhook', [WebhookController::class, 'handleWebhook']);
         Route::get('{id}/success', [BillingController::class, 'successPage']);
-        Route::get('invoice', [BillingController::class, 'invoice']);
+        Route::get('invoice', [BillingController::class, 'invoiceCreate']);
         Route::get('payment', [BillingController::class, 'payment']);
+        Route::get('invoice2', [WebhookController::class, 'handleInvoicePaid']);
     });
 
 });

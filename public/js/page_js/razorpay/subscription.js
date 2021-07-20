@@ -27,7 +27,7 @@ $(function () {
 
 function callPaymentOption(response) {
     var options = {
-        "key": "rzp_test_KEoYxtaoT6ZGUh",
+        "key": "rzp_test_gVFyXGD5XTyIsV",
         "subscription_id": response.subscription,
         "name": response.plan.name,
         "description": response.plan.description,

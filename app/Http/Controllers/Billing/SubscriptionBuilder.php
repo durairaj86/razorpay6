@@ -274,9 +274,14 @@ class SubscriptionBuilder extends Controller
             'customer_id'     => $this->owner->razorpay_id,
             'customer_notify' => $this->customer_notify,
             'quantity'        => $this->quantity,
-            'total_count'     => 6,
+            'total_count'     => $this->total_count,
             'start_at'        => $this->getTrialEndForPayload(),
+            //'start_at'        => Carbon::tomorrow()->timestamp,
             'notes'           => $this->notes,
+            'notify_info' => ([
+                'notify_phone'=>'9894155800',
+                'notify_email'=>'vcdurai@gmail.com',
+            ])
         ]);
     }
 

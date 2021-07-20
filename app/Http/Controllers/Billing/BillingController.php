@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Billing\Plan;
+use App\Models\Billing\RazorpayInvoice;
 use App\Models\User;
 use App\Traits\Billing\Subscriptions;
 use Carbon\Carbon;
@@ -37,7 +38,7 @@ class BillingController extends Controller
         //$invoice->issue();
     }
 
-    public function invoice()
+    public function invoiceCreate()
     {
         $customerId = 'cust_HXBx6H3KEhUazg';
         $data = array(
@@ -47,18 +48,45 @@ class BillingController extends Controller
             'email_notify' => 1,
             'line_items' => array(
                 [
-                    'name' => 'Master Cloud Computing in 30 Days',
+                    'name' => 'Viswa',
                     'description' => 'Invoice for the month of July 2021',
                     'amount' => 10000,
                     'quantity' => 1,
-                ]
+                ],
+                [
+                    'name' => 'Dinesh',
+                    'description' => 'Invoice for the month of July 2021',
+                    'amount' => 10000,
+                    'quantity' => 1,
+                ],
+                [
+                    'name' => 'Saran',
+                    'description' => 'Invoice for the month of July 2021',
+                    'amount' => 10000,
+                    'quantity' => 1,
+                ],
             ),
         );
         $getSubscription = User::query()->where('razorpay_id', $customerId)->first();
         $invoice = $getSubscription->invoice($data);
-        dd($invoice);
+        $subscriptionInvoice = new RazorpayInvoice();
+        $subscriptionInvoice->user_id = 1;
+        $subscriptionInvoice->razorpay_id = $invoice->id;
+        $subscriptionInvoice->customer_id = $invoice->customer_id;
+        $subscriptionInvoice->subscription_user = json_encode(array('1','2','3'));
+        $subscriptionInvoice->status = 'issue';
+        $subscriptionInvoice->save();
+        return $this->invoiceIssue($invoice);
+
     }
 
+    public function invoice()
+    {
+        /*$invoice = $this->invoiceSubscription(['subscription_id'=>'sub_HYt5kQGsMDjEae']);
+        dd($invoice);*/
+        /*$invoice = $this->invoiceData('inv_HYt7FdYqFyb0AS');
+        dd($invoice);*/
+    }
     public function payment()
     {
         $customerId = 'cust_HXBx6H3KEhUazg';
