@@ -271,7 +271,7 @@ class SubscriptionBuilder extends Controller
     {
         return array_filter([
             'plan_id'         => $this->plan,
-            'customer_id'     => $this->owner->razorpay_id,
+            //'customer_id'     => $this->owner->razorpay_id,
             'customer_notify' => $this->customer_notify,
             'quantity'        => $this->quantity,
             'total_count'     => $this->total_count,
